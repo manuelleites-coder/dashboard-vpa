@@ -24,10 +24,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
 .date-filter select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer}
 .date-filter select:focus{outline:none;border-color:var(--accent)}
 .main{padding:18px 28px 40px}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:20px}
 .kc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
 .kc::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
-.kc.c1::before{background:var(--accent)}.kc.c2::before{background:var(--green)}.kc.c3::before{background:var(--blue)}.kc.c4::before{background:var(--purple)}.kc.c5::before{background:var(--orange)}.kc.c6::before{background:var(--red)}
+.kc.c1::before{background:var(--accent)}.kc.c2::before{background:var(--green)}.kc.c3::before{background:var(--blue)}.kc.c4::before{background:var(--purple)}.kc.c5::before{background:var(--orange)}.kc.c6::before{background:var(--red)}.kc.c7::before{background:var(--cyan)}
+.yoy{font-size:11px;font-weight:600;font-family:'Space Mono',monospace;margin-left:6px;vertical-align:middle}
+.yoy.up{color:var(--green)}.yoy.dn{color:var(--red)}
 .kl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-family:'Space Mono',monospace}
 .kv{font-size:24px;font-weight:700;margin-top:3px;letter-spacing:-1px}
 .ks{font-size:10px;color:var(--muted);margin-top:2px}
@@ -67,10 +69,10 @@ table.snap tr:hover td{background:var(--surface-2)}
 <div class="main">
 <div class="kpi-row" id="kpis"></div>
 <div class="grid2">
-<div class="cc full"><div class="ct"><span class="d" style="background:var(--accent)"></span>Evolución GMV mensual (UYU)</div><div class="cw tall"><canvas id="cGMV"></canvas></div></div>
+<div class="cc full"><div class="ct"><span class="d" style="background:var(--accent)"></span>Evolución Facturación mensual (UYU)</div><div class="cw tall"><canvas id="cGMV"></canvas></div></div>
 <div class="cc"><div class="ct"><span class="d" style="background:var(--blue)"></span>Visitas mensuales</div><div class="cw"><canvas id="cVis"></canvas></div></div>
 <div class="cc"><div class="ct"><span class="d" style="background:var(--green)"></span>Tasa de Conversión (%)</div><div class="cw"><canvas id="cCVR"></canvas></div></div>
-<div class="cc"><div class="ct"><span class="d" style="background:var(--purple)"></span>Sold Items mensuales</div><div class="cw"><canvas id="cSI"></canvas></div></div>
+<div class="cc"><div class="ct"><span class="d" style="background:var(--purple)"></span>Unidades mensuales</div><div class="cw"><canvas id="cSI"></canvas></div></div>
 <div class="cc"><div class="ct"><span class="d" style="background:var(--orange)"></span>Orders mensuales</div><div class="cw"><canvas id="cOrd"></canvas></div></div>
 </div>
 <div class="sec">Evolución Live Listings & % Successful Listing</div>
@@ -150,20 +152,58 @@ function buildTabs(){
   S_IDS.forEach(id=>mk(NM[id],id));
 }
 
+function yoyMonth(m){const[y,mo]=m.split('-');return (parseInt(y)-1)+'-'+mo}
+
+function calcYoY(data,sKey,mKey,vKey,sid){
+  // sid is null for all, or a single seller ID
+  const sids=sid?[sid]:null;
+  const currentData=(sids?data.filter(r=>sids.includes(r[sKey])):data).filter(r=>inRange(r[mKey]));
+  const curTotal=currentData.reduce((a,r)=>a+(r[vKey]||0),0);
+  const yoyMonths=filteredMonths().map(yoyMonth);
+  const prevData=(sids?data.filter(r=>sids.includes(r[sKey])):data).filter(r=>yoyMonths.includes(r[mKey]));
+  const prevTotal=prevData.reduce((a,r)=>a+(r[vKey]||0),0);
+  if(prevTotal===0)return null;
+  return ((curTotal-prevTotal)/prevTotal*100);
+}
+
+function yoyBadge(val){
+  if(val===null)return'<span class="yoy" style="color:var(--muted)">—</span>';
+  const cls=val>=0?'up':'dn';
+  const sign=val>=0?'+':'';
+  return`<span class="yoy ${cls}">${sign}${val.toFixed(1)}%</span>`;
+}
+
 function buildKPIs(){
+  const sids=act==='all'?null:[act];
   const sl=(act==='all'?SALES:SALES.filter(r=>r.S==act)).filter(r=>inRange(r.m));
   const vl=(act==='all'?VIS:VIS.filter(r=>r.s==act)).filter(r=>inRange(r.m));
   const il=act==='all'?SNAP:SNAP.filter(r=>r.s==act);
   const tG=sl.reduce((a,r)=>a+r.g,0),tSI=sl.reduce((a,r)=>a+r.si,0),tO=sl.reduce((a,r)=>a+r.o,0);
   const tV=vl.reduce((a,r)=>a+r.v,0),tOC=vl.reduce((a,r)=>a+r.oc,0);
+  const cvr=tV>0?(tOC/tV*100):0;
   const lL=il.reduce((a,r)=>a+r.ll,0),fL=il.reduce((a,r)=>a+r.fl,0),cL=il.reduce((a,r)=>a+r.cl,0);
+
+  // YoY calculations
+  const yG=calcYoY(SALES,'S','m','g',act==='all'?null:act);
+  const ySI=calcYoY(SALES,'S','m','si',act==='all'?null:act);
+  const yV=calcYoY(VIS,'s','m','v',act==='all'?null:act);
+  const yO=calcYoY(SALES,'S','m','o',act==='all'?null:act);
+
+  // CVR YoY: need to compute CVR for prev year period
+  let yCVR=null;
+  const yoyMs=filteredMonths().map(yoyMonth);
+  const prevVis=(act==='all'?VIS:VIS.filter(r=>r.s==act)).filter(r=>yoyMs.includes(r.m));
+  const prevV=prevVis.reduce((a,r)=>a+r.v,0),prevOC=prevVis.reduce((a,r)=>a+r.oc,0);
+  if(prevV>0){const prevCvr=prevOC/prevV*100;if(prevCvr>0)yCVR=((cvr-prevCvr)/prevCvr*100)}
+
   document.getElementById('kpis').innerHTML=`
-  <div class="kc c1"><div class="kl">GMV (UYU)</div><div class="kv">${fmt(tG)}</div><div class="ks">Período seleccionado</div></div>
-  <div class="kc c2"><div class="kl">Sold Items</div><div class="kv">${fmt(tSI)}</div><div class="ks">Período seleccionado</div></div>
-  <div class="kc c3"><div class="kl">Visitas</div><div class="kv">${fmt(tV)}</div><div class="ks">CVR: ${pct(tOC,tV)}%</div></div>
+  <div class="kc c1"><div class="kl">Facturación (UYU)</div><div class="kv">${fmt(tG)}${yoyBadge(yG)}</div><div class="ks">Período seleccionado</div></div>
+  <div class="kc c2"><div class="kl">Unidades</div><div class="kv">${fmt(tSI)}${yoyBadge(ySI)}</div><div class="ks">Período seleccionado</div></div>
+  <div class="kc c3"><div class="kl">Visitas</div><div class="kv">${fmt(tV)}${yoyBadge(yV)}</div><div class="ks">Período seleccionado</div></div>
+  <div class="kc c7"><div class="kl">CVR</div><div class="kv">${cvr.toFixed(2)}%${yoyBadge(yCVR)}</div><div class="ks">Conversión visita→orden</div></div>
   <div class="kc c4"><div class="kl">Live Listings</div><div class="kv">${fmtF(lL)}</div><div class="ks">Catálogo: ${fmtF(cL)}</div></div>
   <div class="kc c5"><div class="kl">Flex Listings</div><div class="kv">${fmtF(fL)}</div><div class="ks">${pct(fL,lL)}% del live</div></div>
-  <div class="kc c6"><div class="kl">Orders</div><div class="kv">${fmt(tO)}</div><div class="ks">Período seleccionado</div></div>`;
+  <div class="kc c6"><div class="kl">Orders</div><div class="kv">${fmt(tO)}${yoyBadge(yO)}</div><div class="ks">Período seleccionado</div></div>`;
 }
 
 function mkChart(canvasId,type,labels,datasets,opts={}){
