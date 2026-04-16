@@ -6,6 +6,7 @@
 <title>VP&A Uruguay 2026 — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root{--bg:#0a0e17;--surface:#111827;--surface-2:#1a2235;--border:#1e2d45;--text:#e2e8f0;--muted:#7b8ba5;--accent:#ffe234;--green:#34d399;--blue:#60a5fa;--purple:#a78bfa;--red:#f87171;--orange:#fb923c;--cyan:#22d3ee}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -102,11 +103,11 @@ const VIS=[
 ];
 
 const LL=[
-{s:201693236,m:'2025-01',ll:10837,sl:8,fl:10236},{s:201693236,m:'2025-03',ll:11227,sl:18,fl:10634},{s:201693236,m:'2025-04',ll:10830,sl:7,fl:10324},{s:201693236,m:'2025-05',ll:11420,sl:8,fl:10900},{s:201693236,m:'2025-06',ll:11935,sl:18,fl:11383},{s:201693236,m:'2025-07',ll:12064,sl:16,fl:11535},{s:201693236,m:'2025-08',ll:14264,sl:15,fl:13633},{s:201693236,m:'2025-09',ll:14796,sl:20,fl:13774},{s:201693236,m:'2025-10',ll:15374,sl:11,fl:13895},{s:201693236,m:'2025-11',ll:14859,sl:10,fl:13265},{s:201693236,m:'2025-12',ll:15170,sl:11,fl:13059},{s:201693236,m:'2026-01',ll:13333,sl:11,fl:11451},{s:201693236,m:'2026-02',ll:14078,sl:15,fl:12231},{s:201693236,m:'2026-04',ll:13342,sl:24,fl:11571},
-{s:711398480,m:'2025-01',ll:5303,sl:5,fl:4993},{s:711398480,m:'2025-02',ll:5592,sl:4,fl:5277},{s:711398480,m:'2025-03',ll:5909,sl:11,fl:5564},{s:711398480,m:'2025-04',ll:6266,sl:6,fl:5878},{s:711398480,m:'2025-05',ll:6504,sl:5,fl:6090},{s:711398480,m:'2025-06',ll:6797,sl:20,fl:6381},{s:711398480,m:'2025-07',ll:6928,sl:16,fl:6502},{s:711398480,m:'2025-08',ll:6855,sl:3,fl:6436},{s:711398480,m:'2025-09',ll:7163,sl:12,fl:6746},{s:711398480,m:'2025-10',ll:7174,sl:6,fl:6760},{s:711398480,m:'2025-11',ll:7333,sl:9,fl:6914},{s:711398480,m:'2025-12',ll:7379,sl:8,fl:6955},{s:711398480,m:'2026-01',ll:7469,sl:10,fl:7045},{s:711398480,m:'2026-02',ll:7577,sl:4,fl:7145},{s:711398480,m:'2026-03',ll:7774,sl:17,fl:7340},{s:711398480,m:'2026-04',ll:7808,sl:29,fl:7374},
-{s:231288367,m:'2025-01',ll:21323,sl:15,fl:17434},{s:231288367,m:'2025-03',ll:22640,sl:31,fl:17050},{s:231288367,m:'2025-04',ll:23294,sl:16,fl:17829},{s:231288367,m:'2025-05',ll:23156,sl:3,fl:17655},{s:231288367,m:'2025-06',ll:23193,sl:29,fl:17709},{s:231288367,m:'2025-07',ll:23060,sl:20,fl:17631},{s:231288367,m:'2025-08',ll:22924,sl:6,fl:17360},{s:231288367,m:'2025-09',ll:21588,sl:14,fl:16492},{s:231288367,m:'2025-10',ll:20318,sl:7,fl:15515},{s:231288367,m:'2025-11',ll:21572,sl:17,fl:16404},{s:231288367,m:'2026-01',ll:20319,sl:10,fl:15513},{s:231288367,m:'2026-02',ll:16904,sl:4,fl:12595},{s:231288367,m:'2026-04',ll:16906,sl:22,fl:12318},
-{s:419727897,m:'2025-01',ll:249,sl:0,fl:0},{s:419727897,m:'2025-03',ll:224,sl:0,fl:0},{s:419727897,m:'2025-04',ll:224,sl:2,fl:0},{s:419727897,m:'2025-05',ll:236,sl:0,fl:0},{s:419727897,m:'2025-06',ll:238,sl:2,fl:0},{s:419727897,m:'2025-07',ll:231,sl:4,fl:0},{s:419727897,m:'2025-08',ll:278,sl:2,fl:0},{s:419727897,m:'2025-09',ll:307,sl:3,fl:0},{s:419727897,m:'2025-10',ll:320,sl:0,fl:0},{s:419727897,m:'2025-11',ll:329,sl:2,fl:0},{s:419727897,m:'2026-01',ll:361,sl:0,fl:78},{s:419727897,m:'2026-02',ll:355,sl:3,fl:74},{s:419727897,m:'2026-03',ll:361,sl:1,fl:82},{s:419727897,m:'2026-04',ll:364,sl:7,fl:86},
-{s:2105656368,m:'2026-01',ll:93,sl:0,fl:0},{s:2105656368,m:'2026-02',ll:210,sl:0,fl:203},{s:2105656368,m:'2026-03',ll:671,sl:0,fl:665},{s:2105656368,m:'2026-04',ll:833,sl:0,fl:828}
+{s:201693236,m:'2025-01',ll:10837,sl:0.1024,fl:10236},{s:201693236,m:'2025-03',ll:11227,sl:0.0889,fl:10634},{s:201693236,m:'2025-04',ll:10830,sl:0.103,fl:10324},{s:201693236,m:'2025-05',ll:11420,sl:0.0798,fl:10900},{s:201693236,m:'2025-06',ll:11935,sl:0.1126,fl:11383},{s:201693236,m:'2025-07',ll:12064,sl:0.1066,fl:11535},{s:201693236,m:'2025-08',ll:14264,sl:0.1116,fl:13633},{s:201693236,m:'2025-09',ll:14796,sl:0.1399,fl:13774},{s:201693236,m:'2025-10',ll:15374,sl:0.1236,fl:13895},{s:201693236,m:'2025-11',ll:14859,sl:0.1117,fl:13265},{s:201693236,m:'2025-12',ll:15170,sl:0.1329,fl:13059},{s:201693236,m:'2026-01',ll:13333,sl:0.1028,fl:11451},{s:201693236,m:'2026-02',ll:14078,sl:0.1435,fl:12231},{s:201693236,m:'2026-04',ll:13411,sl:0.1267,fl:11542},
+{s:711398480,m:'2025-01',ll:5303,sl:0.1849,fl:4993},{s:711398480,m:'2025-02',ll:5592,sl:0.1827,fl:5277},{s:711398480,m:'2025-03',ll:5909,sl:0.1724,fl:5564},{s:711398480,m:'2025-04',ll:6266,sl:0.1439,fl:5878},{s:711398480,m:'2025-05',ll:6504,sl:0.1378,fl:6090},{s:711398480,m:'2025-06',ll:6797,sl:0.1434,fl:6381},{s:711398480,m:'2025-07',ll:6928,sl:0.1471,fl:6502},{s:711398480,m:'2025-08',ll:6855,sl:0.1356,fl:6436},{s:711398480,m:'2025-09',ll:7163,sl:0.1398,fl:6746},{s:711398480,m:'2025-10',ll:7174,sl:0.1456,fl:6760},{s:711398480,m:'2025-11',ll:7333,sl:0.1573,fl:6914},{s:711398480,m:'2025-12',ll:7379,sl:0.1742,fl:6955},{s:711398480,m:'2026-01',ll:7469,sl:0.1752,fl:7045},{s:711398480,m:'2026-02',ll:7577,sl:0.1589,fl:7145},{s:711398480,m:'2026-03',ll:7774,sl:0.1838,fl:7340},{s:711398480,m:'2026-04',ll:7817,sl:0.1898,fl:7381},
+{s:231288367,m:'2025-01',ll:21323,sl:0.0902,fl:17434},{s:231288367,m:'2025-03',ll:22640,sl:0.0616,fl:17050},{s:231288367,m:'2025-04',ll:23294,sl:0.0712,fl:17829},{s:231288367,m:'2025-05',ll:23156,sl:0.0583,fl:17655},{s:231288367,m:'2025-06',ll:23193,sl:0.0619,fl:17709},{s:231288367,m:'2025-07',ll:23060,sl:0.0613,fl:17631},{s:231288367,m:'2025-08',ll:22924,sl:0.0493,fl:17360},{s:231288367,m:'2025-09',ll:21588,sl:0.058,fl:16492},{s:231288367,m:'2025-10',ll:20318,sl:0.0639,fl:15515},{s:231288367,m:'2025-11',ll:21572,sl:0.0783,fl:16404},{s:231288367,m:'2026-01',ll:20319,sl:0.0599,fl:15513},{s:231288367,m:'2026-02',ll:16904,sl:0.0797,fl:12595},{s:231288367,m:'2026-04',ll:16863,sl:0.0975,fl:12279},
+{s:419727897,m:'2025-01',ll:249,sl:0.5629,fl:0},{s:419727897,m:'2025-02',ll:245,sl:0.4897,fl:0},{s:419727897,m:'2025-03',ll:224,sl:0.4997,fl:0},{s:419727897,m:'2025-04',ll:224,sl:0.5363,fl:0},{s:419727897,m:'2025-05',ll:236,sl:0.5298,fl:0},{s:419727897,m:'2025-06',ll:238,sl:0.5341,fl:0},{s:419727897,m:'2025-07',ll:231,sl:0.785,fl:0},{s:419727897,m:'2025-08',ll:278,sl:0.6106,fl:0},{s:419727897,m:'2025-09',ll:307,sl:0.7176,fl:0},{s:419727897,m:'2025-10',ll:320,sl:0.6094,fl:0},{s:419727897,m:'2025-11',ll:329,sl:0.5291,fl:0},{s:419727897,m:'2025-12',ll:348,sl:0.6492,fl:71},{s:419727897,m:'2026-01',ll:361,sl:0.6998,fl:78},{s:419727897,m:'2026-02',ll:355,sl:0.7579,fl:74},{s:419727897,m:'2026-03',ll:361,sl:0.7006,fl:82},{s:419727897,m:'2026-04',ll:364,sl:0.6813,fl:86},
+{s:2105656368,m:'2026-01',ll:93,sl:0.0,fl:0},{s:2105656368,m:'2026-02',ll:210,sl:0.0815,fl:203},{s:2105656368,m:'2026-03',ll:671,sl:0.2222,fl:665},{s:2105656368,m:'2026-04',ll:845,sl:0.1771,fl:840}
 ];
 
 const SNAP=[
@@ -173,6 +174,13 @@ function yoyBadge(val){
   return`<span class="yoy ${cls}">${sign}${val.toFixed(1)}%</span>`;
 }
 
+function ppBadge(val){
+  if(val===null)return'<span class="yoy" style="color:var(--muted)">—</span>';
+  const cls=val>=0?'up':'dn';
+  const sign=val>=0?'+':'';
+  return`<span class="yoy ${cls}">${sign}${val.toFixed(2)}pp</span>`;
+}
+
 function buildKPIs(){
   const sids=act==='all'?null:[act];
   const sl=(act==='all'?SALES:SALES.filter(r=>r.S==act)).filter(r=>inRange(r.m));
@@ -189,18 +197,18 @@ function buildKPIs(){
   const yV=calcYoY(VIS,'s','m','v',act==='all'?null:act);
   const yO=calcYoY(SALES,'S','m','o',act==='all'?null:act);
 
-  // CVR YoY: need to compute CVR for prev year period
+  // CVR YoY in pp (percentage points difference)
   let yCVR=null;
   const yoyMs=filteredMonths().map(yoyMonth);
   const prevVis=(act==='all'?VIS:VIS.filter(r=>r.s==act)).filter(r=>yoyMs.includes(r.m));
   const prevV=prevVis.reduce((a,r)=>a+r.v,0),prevOC=prevVis.reduce((a,r)=>a+r.oc,0);
-  if(prevV>0){const prevCvr=prevOC/prevV*100;if(prevCvr>0)yCVR=((cvr-prevCvr)/prevCvr*100)}
+  if(prevV>0){const prevCvr=prevOC/prevV*100;yCVR=cvr-prevCvr}
 
   document.getElementById('kpis').innerHTML=`
   <div class="kc c1"><div class="kl">Facturación (UYU)</div><div class="kv">${fmt(tG)}${yoyBadge(yG)}</div><div class="ks">Período seleccionado</div></div>
   <div class="kc c2"><div class="kl">Unidades</div><div class="kv">${fmt(tSI)}${yoyBadge(ySI)}</div><div class="ks">Período seleccionado</div></div>
   <div class="kc c3"><div class="kl">Visitas</div><div class="kv">${fmt(tV)}${yoyBadge(yV)}</div><div class="ks">Período seleccionado</div></div>
-  <div class="kc c7"><div class="kl">CVR</div><div class="kv">${cvr.toFixed(2)}%${yoyBadge(yCVR)}</div><div class="ks">Conversión visita→orden</div></div>
+  <div class="kc c7"><div class="kl">CVR</div><div class="kv">${cvr.toFixed(2)}%${ppBadge(yCVR)}</div><div class="ks">Conversión visita→orden</div></div>
   <div class="kc c4"><div class="kl">Live Listings</div><div class="kv">${fmtF(lL)}</div><div class="ks">Catálogo: ${fmtF(cL)}</div></div>
   <div class="kc c5"><div class="kl">Flex Listings</div><div class="kv">${fmtF(fL)}</div><div class="ks">${pct(fL,lL)}% del live</div></div>
   <div class="kc c6"><div class="kl">Orders</div><div class="kv">${fmt(tO)}${yoyBadge(yO)}</div><div class="ks">Período seleccionado</div></div>`;
@@ -210,6 +218,7 @@ function mkChart(canvasId,type,labels,datasets,opts={}){
   const canvas=document.getElementById(canvasId);if(!canvas)return;
   const cfg={type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:opts.legend||false,labels:{color:'#7b8ba5',font:{family:'Space Mono',size:9},boxWidth:10,padding:8}},
+    datalabels:{display:false},
     tooltip:{backgroundColor:'#1a2235',titleColor:'#e2e8f0',bodyColor:'#e2e8f0',borderColor:'#1e2d45',borderWidth:1,padding:8,cornerRadius:6,
     callbacks:opts.tooltipCb||{}}},
     interaction:opts.interaction||{},
@@ -295,22 +304,33 @@ function buildLLCharts(){
     if(!data.length)return;
     const ms=data.map(r=>r.m);
     const labels=ms.map(mLbl);
-    const slPct=data.map(r=>r.ll>0?(r.sl/r.ll*100):0);
+    const slPct=data.map(r=>r.sl);
+
+    // Calculate YoY pp for % Successful
+    const curSlAvg=slPct.length>0?slPct.reduce((a,v)=>a+v,0)/slPct.length:0;
+    const yoyMs=ms.map(yoyMonth);
+    const prevData=LL.filter(r=>r.s==id&&yoyMs.includes(r.m));
+    const prevSlPct=prevData.map(r=>r.sl);
+    const prevSlAvg=prevSlPct.length>0?prevSlPct.reduce((a,v)=>a+v,0)/prevSlPct.length:null;
+    const slYoYpp=prevSlAvg!==null?curSlAvg-prevSlAvg:null;
+    const ppLabel=slYoYpp!==null?` | Avg SL% ${curSlAvg.toFixed(2)}% <span class="yoy ${slYoYpp>=0?'up':'dn'}">${slYoYpp>=0?'+':''}${slYoYpp.toFixed(2)}pp YoY</span>`:` | Avg SL% ${curSlAvg.toFixed(2)}%`;
 
     const span=act==='all'?'':'full';
     const card=document.createElement('div');card.className='cc '+span;
     const cid='ll_'+id;
-    card.innerHTML=`<div class="ct"><span class="d" style="background:${CL[id]}"></span>${NM[id]} — Live Listings & % Successful</div><div class="cw"><canvas id="${cid}"></canvas></div>`;
+    card.innerHTML=`<div class="ct"><span class="d" style="background:${CL[id]}"></span>${NM[id]} — Live Listings & % Successful${ppLabel}</div><div class="cw"><canvas id="${cid}"></canvas></div>`;
     area.appendChild(card);
 
     const canvas=document.getElementById(cid);
     const ch=new Chart(canvas,{type:'bar',data:{labels,datasets:[
-      {label:'Live Listings',data:data.map(r=>r.ll),backgroundColor:CL[id]+'66',borderColor:CL[id],borderWidth:1,borderRadius:3,yAxisID:'y',order:2},
-      {label:'% Successful',data:slPct,type:'line',borderColor:'#f87171',backgroundColor:'#f8717133',borderWidth:2,tension:.3,pointRadius:3,pointBackgroundColor:'#f87171',yAxisID:'y1',order:1}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      {label:'Live Listings',data:data.map(r=>r.ll),backgroundColor:CL[id]+'66',borderColor:CL[id],borderWidth:1,borderRadius:3,yAxisID:'y',order:2,datalabels:{display:false}},
+      {label:'% Successful',data:slPct,type:'line',borderColor:'#f87171',backgroundColor:'#f8717133',borderWidth:2,tension:.3,pointRadius:4,pointBackgroundColor:'#f87171',yAxisID:'y1',order:1,
+        datalabels:{display:true,align:'top',anchor:'end',color:'#f87171',font:{family:'Space Mono',size:9,weight:700},formatter:v=>v.toFixed(2)+'%',offset:4}}
+    ]},plugins:[ChartDataLabels],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:true,labels:{color:'#7b8ba5',font:{family:'Space Mono',size:9},boxWidth:10,padding:8}},
       tooltip:{backgroundColor:'#1a2235',titleColor:'#e2e8f0',bodyColor:'#e2e8f0',borderColor:'#1e2d45',borderWidth:1,padding:8,cornerRadius:6,
-      callbacks:{label:function(ctx){return ctx.dataset.yAxisID==='y1'?'% Successful: '+ctx.parsed.y.toFixed(2)+'%':'Live Listings: '+ctx.parsed.y.toLocaleString('es-UY')}}}},
+      callbacks:{label:function(ctx){return ctx.dataset.yAxisID==='y1'?'% Successful: '+ctx.parsed.y.toFixed(2)+'%':'Live Listings: '+ctx.parsed.y.toLocaleString('es-UY')}}},
+      datalabels:{}},
       scales:{x:{grid:{color:'rgba(30,45,69,.4)',drawBorder:false},ticks:{color:'#7b8ba5',font:{family:'Space Mono',size:9},maxRotation:45}},
       y:{position:'left',grid:{color:'rgba(30,45,69,.4)',drawBorder:false},ticks:{color:CL[id],font:{family:'Space Mono',size:9}}},
       y1:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#f87171',font:{family:'Space Mono',size:9},callback:v=>v.toFixed(1)+'%'},min:0}}}});
