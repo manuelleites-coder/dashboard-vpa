@@ -1,5 +1,5 @@
 # update_dashboard.ps1
-# Dashboard VP&A Uruguay 2026 - Actualización de datos via bq CLI
+# Dashboard VP&A Uruguay 2026 - Actualizacion de datos via bq CLI
 # Ejecutar desde: C:\Users\mleites\dashboard-vpa
 # Comando: powershell -ExecutionPolicy Bypass -File update_dashboard.ps1
 
@@ -15,12 +15,12 @@ Write-Host " Dashboard VP&A Uruguay 2026 - Actualizacion de datos BQ"
 Write-Host " Cutoff: $CUTOFF"
 Write-Host "============================================================"
 
-# ── Helper: convierte SQL multilínea a una sola línea para pasarlo como argumento
+# -- Helper: convierte SQL multilinea a una sola linea para pasarlo como argumento
 function Flatten-SQL($sql) {
     return ($sql -split "`r?`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join " "
 }
 
-# ── Helper: ejecutar query BQ pasando SQL como argumento directo ──────────────
+# -- Helper: ejecutar query BQ pasando SQL como argumento directo --------------
 function Invoke-BQ {
     param([string]$Sql, [string]$Label, [int]$MaxRows = 500000)
     Write-Host "`n[$Label] Ejecutando query..."
@@ -61,35 +61,43 @@ function Invoke-BQ {
     }
 }
 
-# ── Helper: reemplazar array JS (protege si resultado nulo) ──────────────────
+# Helper: reemplazar array JS (protege si resultado nulo)
 function Replace-JSArray {
     param([string]$Html, [string]$VarName, $Data, [string]$NewJs)
     if ($null -eq $Data) {
-        Write-Host "   [SKIP] $VarName — query fallo, conservando datos existentes"
+        Write-Host "   [SKIP] $VarName - query fallo, conservando datos existentes"
         return $Html
     }
     if (@($Data).Count -eq 0 -and $VarName -ne "TOP10") {
-        Write-Host "   [SKIP] $VarName — 0 filas, conservando datos existentes"
+        Write-Host "   [SKIP] $VarName - 0 filas, conservando datos existentes"
         return $Html
     }
-    $pattern = "(?s)const $VarName=\[.*?\];"
-    $newHtml = [regex]::Replace($Html, $pattern, "const $VarName=$NewJs;")
-    if ($newHtml -eq $Html) {
+    # Usar IndexOf en vez de regex para evitar problemas con strings muy largos
+    $startMarker = "const $VarName=["
+    $startIdx = $Html.IndexOf($startMarker)
+    if ($startIdx -lt 0) {
         Write-Host "   [AVISO] $VarName no encontrado en HTML"
-    } else {
-        Write-Host "   [OK] $VarName actualizado ($(@($Data).Count) filas)"
+        return $Html
     }
+    $endIdx = $Html.IndexOf("];", $startIdx)
+    if ($endIdx -lt 0) {
+        Write-Host "   [AVISO] $VarName - no se encontro cierre en HTML"
+        return $Html
+    }
+    $endIdx += 2
+    $newHtml = $Html.Substring(0, $startIdx) + "const $VarName=$NewJs;" + $Html.Substring($endIdx)
+    Write-Host "   [OK] $VarName actualizado ($(@($Data).Count) filas)"
     return $newHtml
 }
 
-# ── Helpers numéricos ─────────────────────────────────────────────────────────
+# -- Helpers numericos ---------------------------------------------------------
 function Safe-Int($v)  { if ($null -eq $v -or "$v".Trim() -eq "") { return 0 }; return [int][double]"$v" }
 function Safe-Dec($v)  { if ($null -eq $v -or "$v".Trim() -eq "") { return 0.0 }; return [math]::Round([double]"$v", 2) }
 function Esc-Str($v)   { if ($null -eq $v) { return "" }; return ("$v" -replace '\\','\\' -replace '"','\"') }
 
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 # QUERIES
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 
 $SQL_SALES = @"
 SELECT
@@ -157,15 +165,15 @@ $SQL_LL = @"
 WITH base AS (
   SELECT
     CUS_CUST_ID AS s,
-    FORMAT_DATE('%Y-%m', PARSE_DATE('%Y%m%d', CAST(PHOTO_ID AS STRING))) AS m,
-    CAST(PHOTO_ID AS STRING) AS photo_str,
+    FORMAT_DATE('%Y-%m', PHOTO_ID) AS m,
+    FORMAT_DATE('%Y%m%d', PHOTO_ID) AS photo_str,
     SUM(LIVE_LISTING) AS ll,
     SUM(IF(ITE_FLEX = TRUE, LIVE_LISTING, 0)) AS fl
   FROM ``$PROJECT.WHOWNER.DM_MKP_COMMERCE_OFFER_SELLER_LIVELISTING_AGG``
   WHERE CUS_CUST_ID IN ($SELLERS)
     AND VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
-    AND CAST(PHOTO_ID AS STRING) >= '20250101'
-    AND CAST(PHOTO_ID AS STRING) <= '$CUTOFF_INT'
+    AND FORMAT_DATE('%Y%m%d', PHOTO_ID) >= '20250101'
+    AND FORMAT_DATE('%Y%m%d', PHOTO_ID) <= '$CUTOFF_INT'
   GROUP BY 1, 2, 3
 ),
 medians AS (
@@ -189,7 +197,7 @@ ORDER BY 1, 2
 
 $SQL_SNAP = @"
 WITH latest AS (
-  SELECT MAX(CAST(PHOTO_ID AS STRING)) AS max_photo
+  SELECT MAX(FORMAT_DATE('%Y%m%d', PHOTO_ID)) AS max_photo
   FROM ``$PROJECT.WHOWNER.DM_MKP_COMMERCE_OFFER_SELLER_LIVELISTING_AGG``
   WHERE CUS_CUST_ID IN ($SELLERS)
     AND VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
@@ -197,7 +205,7 @@ WITH latest AS (
 SELECT
   t.CUS_CUST_ID AS s,
   SUM(t.LIVE_LISTING) AS ll,
-  SUM(IF(t.ITE_ITEM_CATALOG_LISTING_FLG = TRUE, t.LIVE_LISTING, 0)) AS cl,
+  0 AS cl,
   SUM(IF(t.ITE_FLEX = TRUE, t.LIVE_LISTING, 0)) AS fl,
   SUM(IF(t.ITE_ITEM_STATUS = 'paused', t.LIVE_LISTING, 0)) AS pl,
   SUM(IF(t.ITE_ITEM_STATUS = 'under_review', t.LIVE_LISTING, 0)) AS ur
@@ -205,7 +213,7 @@ FROM ``$PROJECT.WHOWNER.DM_MKP_COMMERCE_OFFER_SELLER_LIVELISTING_AGG`` t
 CROSS JOIN latest
 WHERE t.CUS_CUST_ID IN ($SELLERS)
   AND t.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
-  AND CAST(t.PHOTO_ID AS STRING) = latest.max_photo
+  AND FORMAT_DATE('%Y%m%d', t.PHOTO_ID) = latest.max_photo
 GROUP BY 1
 "@
 
@@ -236,9 +244,9 @@ SELECT s, id, title, units, nmv, status FROM (
 ORDER BY s, nmv DESC
 "@
 
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 # FETCH DATA
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 
 $sales = Invoke-BQ $SQL_SALES "1/6 SALES"
 $vis   = Invoke-BQ $SQL_VIS   "2/6 VISITAS"
@@ -247,9 +255,9 @@ $ll    = Invoke-BQ $SQL_LL    "4/6 LIVE LISTINGS"
 $snap  = Invoke-BQ $SQL_SNAP  "5/6 SNAPSHOT"
 $top10 = Invoke-BQ $SQL_TOP10 "6/6 TOP 10 ITEMS"
 
-# ════════════════════════════════════════════════════════════════════════════════
-# LOOKUP: unique items con venta por seller/mes → para calcular SL en LL
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
+# LOOKUP: unique items con venta por seller/mes -> para calcular SL en LL
+# ================================================================================
 $salesLookup = @{}
 if ($sales) {
     foreach ($r in @($sales)) {
@@ -257,9 +265,9 @@ if ($sales) {
     }
 }
 
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 # GENERAR ARRAYS JS
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 Write-Host "`nGenerando arrays JS..."
 
 $salesJs = if ($sales) {
@@ -305,9 +313,9 @@ $top10Js = if ($top10 -and @($top10).Count -gt 0) {
     }) -join ",") + "]"
 } else { "[]" }
 
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 # ACTUALIZAR HTML
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 Write-Host "`nActualizando HTML..."
 $html = [System.IO.File]::ReadAllText($HTML_PATH, [System.Text.Encoding]::UTF8)
 
@@ -319,12 +327,12 @@ $html = Replace-JSArray $html "AGG2"  $agg2  $agg2Js
 if ($null -ne $llJs) {
     $html = Replace-JSArray $html "LL" $ll $llJs
 } else {
-    Write-Host "   [SKIP] LL — conservando datos existentes"
+    Write-Host "   [SKIP] LL - conservando datos existentes"
 }
 if ($null -ne $snapJs) {
     $html = Replace-JSArray $html "SNAP" $snap $snapJs
 } else {
-    Write-Host "   [SKIP] SNAP — conservando datos existentes"
+    Write-Host "   [SKIP] SNAP - conservando datos existentes"
 }
 $html = Replace-JSArray $html "TOP10" $top10 $top10Js
 
@@ -335,9 +343,9 @@ $html = [regex]::Replace($html, 'Datos BigQuery al \d{2}/\d{2}/\d{4}', "Datos Bi
 [System.IO.File]::WriteAllText($HTML_PATH, $html, [System.Text.Encoding]::UTF8)
 Write-Host "   HTML guardado OK"
 
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 # GIT PUSH
-# ════════════════════════════════════════════════════════════════════════════════
+# ================================================================================
 Write-Host "`n[Deploy] Subiendo a GitHub Pages..."
 Push-Location $PSScriptRoot
 git add index.html update_dashboard.ps1
