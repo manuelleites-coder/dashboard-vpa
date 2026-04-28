@@ -417,20 +417,31 @@ function buildTop10Table(){
   area.innerHTML='';
   if(act==='all')return;
   const sid=parseInt(act)||act;
-  const items=TOP10.filter(r=>r.s==sid);
-  if(!items.length){
-    area.innerHTML=`<div class="sec">Top 10 Ítems (2026 YTD)</div><div class="cc" style="text-align:center;padding:30px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace">Datos pendientes — ejecutar update_data.py para cargar</div>`;
+  // Filtrar por seller y rango de meses seleccionado
+  const filtered=TOP10.filter(r=>r.s==sid&&inRange(r.m));
+  if(!filtered.length){
+    area.innerHTML=`<div class="sec">Top 10 Items</div><div class="cc" style="text-align:center;padding:30px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace">Sin datos para el periodo seleccionado</div>`;
     return;
   }
-  area.innerHTML=`<div class="sec">Top 10 Ítems — ${NM[sid]} (2026 YTD)</div>`;
+  // Agregar por item en el periodo filtrado
+  const byItem={};
+  filtered.forEach(r=>{
+    if(!byItem[r.id])byItem[r.id]={id:r.id,title:r.title,units:0,nmv:0,status:r.status};
+    byItem[r.id].units+=r.units;
+    byItem[r.id].nmv+=r.nmv;
+    byItem[r.id].status=r.status;
+  });
+  const items=Object.values(byItem).sort((a,b)=>b.nmv-a.nmv).slice(0,10);
+  const periodLabel=mFrom===mTo?mLbl(mFrom):(mLbl(mFrom)+' - '+mLbl(mTo));
+  area.innerHTML=`<div class="sec">Top 10 Items - ${NM[sid]} (${periodLabel})</div>`;
   const card=document.createElement('div');
   card.className='cc';
   card.style.marginBottom='24px';
   card.style.overflowX='auto';
-  const statusLabel={active:'Activo',paused:'Pausado',under_review:'En revisión',closed:'Cerrado'};
+  const statusLabel={active:'Activo',paused:'Pausado',under_review:'En revision',closed:'Cerrado'};
   const statusColor={active:'var(--green)',paused:'var(--orange)',under_review:'var(--cyan)',closed:'var(--red)'};
   let html='<table class="agg2t"><thead><tr>';
-  html+='<th>#</th><th>ID Ítem</th><th>Título</th><th style="text-align:right">Uds.</th><th style="text-align:right">NMV (UYU)</th><th>Estado</th><th>Link ML</th>';
+  html+='<th>#</th><th>ID Item</th><th>Titulo</th><th style="text-align:right">Uds.</th><th style="text-align:right">NMV (UYU)</th><th>Estado</th><th>Link ML</th>';
   html+='</tr></thead><tbody>';
   items.forEach((r,i)=>{
     const numId=String(r.id).replace(/^MLU/,'');
@@ -444,7 +455,7 @@ function buildTop10Table(){
       <td style="text-align:right;font-weight:700">${fmt(r.units)}</td>
       <td style="text-align:right;font-weight:700">${fmt(r.nmv)}</td>
       <td><span style="color:${sc};font-size:10px;font-weight:600;font-family:'Space Mono',monospace;text-transform:uppercase">${sl}</span></td>
-      <td><a href="${url}" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;font-weight:600;text-decoration:none;font-family:'Space Mono',monospace">→ Ver</a></td>
+      <td><a href="${url}" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;font-weight:600;text-decoration:none;font-family:'Space Mono',monospace">Ver</a></td>
     </tr>`;
   });
   html+='</tbody></table>';
