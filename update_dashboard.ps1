@@ -242,19 +242,17 @@ WITH monthly AS (
     AND d.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
   GROUP BY 1, 2, 3
 ),
-item_rank AS (
-  SELECT s, id,
-    ROW_NUMBER() OVER (PARTITION BY s ORDER BY SUM(nmv) DESC) AS rn
-  FROM monthly
-  GROUP BY 1, 2
-),
 top_items AS (
-  SELECT s, id FROM item_rank WHERE rn <= 20
+  SELECT s, id FROM (
+    SELECT s, id,
+      ROW_NUMBER() OVER (PARTITION BY s ORDER BY tot DESC) AS rn
+    FROM (SELECT s, id, SUM(nmv) AS tot FROM monthly GROUP BY 1, 2)
+  ) WHERE rn <= 20
 )
-SELECT m.s, m.id, m.m, m.title, m.units, m.nmv, m.status
-FROM monthly m
-JOIN top_items t ON m.s = t.s AND m.id = t.id
-ORDER BY m.s, m.id, m.m
+SELECT mo.s, mo.id, mo.m, mo.title, mo.units, mo.nmv, mo.status
+FROM monthly mo
+JOIN top_items t ON mo.s = t.s AND mo.id = t.id
+ORDER BY mo.s, mo.id, mo.m
 "@
 
 # ================================================================================
