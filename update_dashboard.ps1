@@ -7,7 +7,7 @@ $PROJECT    = "meli-bi-data"
 $CUTOFF     = "2026-04-26"
 $HTML_PATH  = "$PSScriptRoot\index.html"
 $SELLERS    = "201693236,711398480,231288367,419727897,2105656368"
-$TOP10_FROM = "2026-01-01"
+$TOP10_FROM = "2025-01-01"
 $CUTOFF_INT = $CUTOFF.Replace("-", "")   # "20260426"
 
 Write-Host "============================================================"
@@ -217,17 +217,18 @@ WHERE t.CUS_CUST_ID IN ($SELLERS)
 GROUP BY 1
 "@
 
-# TOP10 sin QUALIFY (subquery para mayor compatibilidad)
+# TOP10 con dimension mensual para filtro dinamico en el dashboard
+# Pre-calcula top 20 items por seller (total periodo), luego devuelve breakdown mensual
 $SQL_TOP10 = @"
-SELECT s, id, title, units, nmv, status FROM (
+WITH monthly AS (
   SELECT
     o.ORD_SELLER.ID AS s,
     o.ITE_ITEM_ID AS id,
+    FORMAT_DATE('%Y-%m', o.ORD_CLOSED_DT) AS m,
     ANY_VALUE(i.ITE_ITEM_TITLE) AS title,
     SUM(o.ORD_ITEM.QTY) AS units,
     SUM(o.ORD_TOTAL_AMOUNT) AS nmv,
-    ANY_VALUE(i.ITE_ITEM_STATUS) AS status,
-    ROW_NUMBER() OVER (PARTITION BY o.ORD_SELLER.ID ORDER BY SUM(o.ORD_TOTAL_AMOUNT) DESC) AS rn
+    ANY_VALUE(i.ITE_ITEM_STATUS) AS status
   FROM ``$PROJECT.WHOWNER.BT_ORD_ORDERS`` o
   JOIN ``$PROJECT.WHOWNER.LK_ITE_ITEM_DOMAINS`` d
     ON o.ITE_ITEM_ID = d.ITE_ITEM_ID AND o.SIT_SITE_ID = d.SIT_SITE_ID
@@ -239,9 +240,21 @@ SELECT s, id, title, units, nmv, status FROM (
     AND o.ORD_CLOSED_DT <= '$CUTOFF'
     AND o.ORD_STATUS = 'paid'
     AND d.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
+  GROUP BY 1, 2, 3
+),
+item_rank AS (
+  SELECT s, id,
+    ROW_NUMBER() OVER (PARTITION BY s ORDER BY SUM(nmv) DESC) AS rn
+  FROM monthly
   GROUP BY 1, 2
-) WHERE rn <= 10
-ORDER BY s, nmv DESC
+),
+top_items AS (
+  SELECT s, id FROM item_rank WHERE rn <= 20
+)
+SELECT m.s, m.id, m.m, m.title, m.units, m.nmv, m.status
+FROM monthly m
+JOIN top_items t ON m.s = t.s AND m.id = t.id
+ORDER BY m.s, m.id, m.m
 "@
 
 # ================================================================================
@@ -309,7 +322,7 @@ $top10Js = if ($top10 -and @($top10).Count -gt 0) {
     "[" + ((@($top10) | ForEach-Object {
         $title  = Esc-Str $_.title
         $status = if ($_.status) { "$($_.status)" } else { "active" }
-        "{s:$(Safe-Int $_.s),id:`"$($_.id)`",title:`"$title`",units:$(Safe-Int $_.units),nmv:$(Safe-Dec $_.nmv),status:`"$status`"}"
+        "{s:$(Safe-Int $_.s),id:`"$($_.id)`",m:`"$($_.m)`",title:`"$title`",units:$(Safe-Int $_.units),nmv:$(Safe-Dec $_.nmv),status:`"$status`"}"
     }) -join ",") + "]"
 } else { "[]" }
 
