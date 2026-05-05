@@ -4,7 +4,7 @@
 # Comando: powershell -ExecutionPolicy Bypass -File update_dashboard.ps1
 
 $PROJECT    = "meli-bi-data"
-$CUTOFF     = "2026-04-26"
+$CUTOFF     = "2026-04-30"
 $HTML_PATH  = "$PSScriptRoot\index.html"
 $SELLERS    = "201693236,711398480,231288367,419727897,2105656368"
 $TOP10_FROM = "2025-01-01"
@@ -141,23 +141,46 @@ ORDER BY 1, 2
 "@
 
 $SQL_AGG2 = @"
-SELECT
-  o.ORD_SELLER.ID AS s,
-  FORMAT_DATE('%Y-%m', o.ORD_CLOSED_DT) AS m,
-  d.DOM_DOMAIN_AGG2 AS a,
-  SUM(o.ORD_TOTAL_AMOUNT) AS g,
-  SUM(o.ORD_ITEM.QTY) AS si,
-  COUNT(DISTINCT o.ORD_ORDER_ID) AS oc
-FROM ``$PROJECT.WHOWNER.BT_ORD_ORDERS`` o
-JOIN ``$PROJECT.WHOWNER.LK_ITE_ITEM_DOMAINS`` d
-  ON o.ITE_ITEM_ID = d.ITE_ITEM_ID AND o.SIT_SITE_ID = d.SIT_SITE_ID
-WHERE o.ORD_SELLER.ID IN ($SELLERS)
-  AND o.SIT_SITE_ID = 'MLU'
-  AND o.ORD_CLOSED_DT >= '2024-01-01'
-  AND o.ORD_CLOSED_DT <= '$CUTOFF'
-  AND o.ORD_STATUS = 'paid'
-  AND d.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
-GROUP BY 1, 2, 3
+WITH ord AS (
+  SELECT
+    o.ORD_SELLER.ID AS s,
+    FORMAT_DATE('%Y-%m', o.ORD_CLOSED_DT) AS m,
+    d.DOM_DOMAIN_AGG2 AS a,
+    SUM(o.ORD_TOTAL_AMOUNT) AS g,
+    SUM(o.ORD_ITEM.QTY) AS si,
+    COUNT(DISTINCT o.ORD_ORDER_ID) AS oc
+  FROM ``$PROJECT.WHOWNER.BT_ORD_ORDERS`` o
+  JOIN ``$PROJECT.WHOWNER.LK_ITE_ITEM_DOMAINS`` d
+    ON o.ITE_ITEM_ID = d.ITE_ITEM_ID AND o.SIT_SITE_ID = d.SIT_SITE_ID
+  WHERE o.ORD_SELLER.ID IN ($SELLERS)
+    AND o.SIT_SITE_ID = 'MLU'
+    AND o.ORD_CLOSED_DT >= '2024-01-01'
+    AND o.ORD_CLOSED_DT <= '$CUTOFF'
+    AND o.ORD_STATUS = 'paid'
+    AND d.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
+  GROUP BY 1, 2, 3
+),
+vis AS (
+  SELECT
+    i.CUS_CUST_ID_SEL AS s,
+    FORMAT_DATE('%Y-%m', c.DATE) AS m,
+    d.DOM_DOMAIN_AGG2 AS a,
+    SUM(c.VISITS_TOTAL) AS v
+  FROM ``$PROJECT.WHOWNER.LK_ITE_CONVERSION`` c
+  JOIN ``$PROJECT.WHOWNER.LK_ITE_ITEM_DOMAINS`` d
+    ON c.ITE_ITEM_ID = d.ITE_ITEM_ID AND c.SIT_SITE_ID = d.SIT_SITE_ID
+  JOIN ``$PROJECT.WHOWNER.LK_ITE_ITEMS`` i
+    ON c.ITE_ITEM_ID = i.ITE_ITEM_ID AND c.SIT_SITE_ID = i.SIT_SITE_ID
+  WHERE i.CUS_CUST_ID_SEL IN ($SELLERS)
+    AND c.SIT_SITE_ID = 'MLU'
+    AND c.DATE >= '2024-01-01'
+    AND c.DATE <= '$CUTOFF'
+    AND d.VERTICAL = 'VEHICLE PARTS & ACCESSORIES'
+  GROUP BY 1, 2, 3
+)
+SELECT o.s, o.m, o.a, o.g, o.si, o.oc, COALESCE(v.v, 0) AS v
+FROM ord o
+LEFT JOIN vis v ON o.s = v.s AND o.m = v.m AND o.a = v.a
 ORDER BY 1, 2, 3
 "@
 
@@ -296,7 +319,7 @@ $visJs = if ($vis) {
 $agg2Js = if ($agg2) {
     "[" + ((@($agg2) | ForEach-Object {
         $a = if ($_.a) { Esc-Str $_.a } else { "OTHER" }
-        "{s:$(Safe-Int $_.s),m:`"$($_.m)`",a:`"$a`",g:$(Safe-Dec $_.g),si:$(Safe-Int $_.si),v:0,oc:$(Safe-Int $_.oc)}"
+        "{s:$(Safe-Int $_.s),m:`"$($_.m)`",a:`"$a`",g:$(Safe-Dec $_.g),si:$(Safe-Int $_.si),v:$(Safe-Int $_.v),oc:$(Safe-Int $_.oc)}"
     }) -join ",") + "]"
 } else { "[]" }
 
