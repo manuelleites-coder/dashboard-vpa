@@ -1,4 +1,4 @@
-# update_dashboard.ps1
+﻿# update_dashboard.ps1
 # Dashboard VP&A Uruguay 2026 - Actualizacion de datos via bq CLI
 # Ejecutar desde: C:\Users\mleites\dashboard-vpa
 # Comando: powershell -ExecutionPolicy Bypass -File update_dashboard.ps1

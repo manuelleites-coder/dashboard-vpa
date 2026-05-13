@@ -134,13 +134,13 @@ const pct=(a,b)=>b>0?(a/b*100).toFixed(2):'0.00';
 function inRange(m){return m>=mFrom&&m<=mTo}
 function filteredMonths(){return ALL_MONTHS.filter(inRange)}
 function destroyAll(){chartInstances.forEach(c=>{try{c.destroy()}catch(e){}});chartInstances=[]}
-function yoyMonth(m){const[y,mo]=m.split('-');return(parseInt(y)-1)+'-'+mo}
+function yoyMonth(m){const[y,mo]=m.split('-');return(parseInt(y)-1)+'-'+mo}function currentYearMonths(){const ms=filteredMonths();if(!ms.length)return ms;const maxY=Math.max(...ms.map(m=>parseInt(m)));return ms.filter(m=>m.startsWith(maxY+'-'));}
 
 function calcYoY(data,sKey,mKey,vKey,sid){
   const sids=sid?[sid]:null;
-  const currentData=(sids?data.filter(r=>sids.includes(r[sKey])):data).filter(r=>inRange(r[mKey]));
+  const cyMs=currentYearMonths();const currentData=(sids?data.filter(r=>sids.includes(r[sKey])):data).filter(r=>cyMs.includes(r[mKey]));
   const curTotal=currentData.reduce((a,r)=>a+(r[vKey]||0),0);
-  const yoyMonths=filteredMonths().map(yoyMonth);
+  const yoyMonths=cyMs.map(yoyMonth);
   const prevData=(sids?data.filter(r=>sids.includes(r[sKey])):data).filter(r=>yoyMonths.includes(r[mKey]));
   const prevTotal=prevData.reduce((a,r)=>a+(r[vKey]||0),0);
   if(prevTotal===0)return null;
@@ -196,17 +196,17 @@ function buildKPIs(){
   const yV=calcYoY(VIS.filter(r=>sids.includes(r.s)),'s','m','v',null);
   const yO=calcYoY(SALES.filter(r=>sids.includes(r.S)),'S','m','o',null);
   let yCVR=null;
-  const yoyMs=filteredMonths().map(yoyMonth);
+  const cyMs2=currentYearMonths();const yoyMs=cyMs2.map(yoyMonth);
   const prevVis=VIS.filter(r=>sids.includes(r.s)&&yoyMs.includes(r.m));
   const prevV=prevVis.reduce((a,r)=>a+r.v,0),prevOC=prevVis.reduce((a,r)=>a+r.oc,0);
-  if(prevV>0){const prevCvr=prevOC/prevV*100;yCVR=cvr-prevCvr}
+  const cyVis=VIS.filter(r=>sids.includes(r.s)&&cyMs2.includes(r.m));const cyCvrV=cyVis.reduce((a,r)=>a+r.v,0),cyCvrOC=cyVis.reduce((a,r)=>a+r.oc,0);const cyCvr=cyCvrV>0?(cyCvrOC/cyCvrV*100):0;if(prevV>0){const prevCvr=prevOC/prevV*100;yCVR=cyCvr-prevCvr}
   // NASP (ticket promedio)
   const nasp=tO>0?(tG/tO):0;
-  const prevSalesNasp=SALES.filter(r=>sids.includes(r.S)&&yoyMs.includes(r.m));
+  const cySalesNasp=SALES.filter(r=>sids.includes(r.S)&&cyMs2.includes(r.m));const cyNG2=cySalesNasp.reduce((a,r)=>a+r.g,0),cyNO2=cySalesNasp.reduce((a,r)=>a+r.o,0);const cyNasp=cyNO2>0?(cyNG2/cyNO2):0;const prevSalesNasp=SALES.filter(r=>sids.includes(r.S)&&yoyMs.includes(r.m));
   const prevNG=prevSalesNasp.reduce((a,r)=>a+r.g,0);
   const prevNO=prevSalesNasp.reduce((a,r)=>a+r.o,0);
   const prevNasp=prevNO>0?(prevNG/prevNO):null;
-  const yNASP=(prevNasp!==null&&prevNasp>0)?((nasp-prevNasp)/prevNasp*100):null;
+  const yNASP=(prevNasp!==null&&prevNasp>0)?((cyNasp-prevNasp)/prevNasp*100):null;
   document.getElementById('kpis').innerHTML=`
   <div class="kc c1"><div class="kl">Facturación (UYU)</div><div class="kv">${fmt(tG)}${yoyBadge(yG)}</div><div class="ks">Período seleccionado</div></div>
   <div class="kc c8"><div class="kl">Ticket Prom. (UYU)</div><div class="kv">${fmtF(Math.round(nasp))}${yoyBadge(yNASP)}</div><div class="ks">NMV / Órdenes (NASP)</div></div>
