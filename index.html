@@ -48,11 +48,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
 .cw{position:relative;height:230px}
 .cw.tall{height:280px}
 .sec{font-size:15px;font-weight:700;margin:24px 0 12px;padding-left:10px;border-left:3px solid var(--accent)}
-table.snap{width:100%;border-collapse:collapse;font-size:11px}
-table.snap th{text-align:left;padding:8px 10px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-family:'Space Mono',monospace;border-bottom:1px solid var(--border)}
-table.snap td{padding:9px 10px;border-bottom:1px solid var(--border)}
-table.snap tr:last-child td{border-bottom:none}
-table.snap tr:hover td{background:var(--surface-2)}
+
 .bf{height:5px;border-radius:3px;display:inline-block}
 .rep-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
 .rep-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
@@ -99,8 +95,7 @@ table.agg2t .yoy-cell{font-size:10px;font-family:'Space Mono',monospace}
 <div id="pieArea"></div>
 <div class="sec">Evolución Live Listings & % Successful Listing (ítems únicos con venta / live listings)</div>
 <div class="grid2" id="llArea"></div>
-<div class="sec">Snapshot de Publicaciones (actual)</div>
-<div class="cc"><table class="snap" id="snapT"></table></div>
+
 <div id="agg2Area"></div>
 <div id="top10Area"></div>
 </div>
@@ -476,7 +471,7 @@ function buildTop10Table(){
   area.appendChild(card);
 }
 
-function render(){destroyAll();buildTabs();buildSellerFilter();buildKPIs();buildReputation();buildMainCharts();buildPieChart();buildLLCharts();buildSnap();buildAGG2Table();buildTop10Table()}
+function render(){destroyAll();buildTabs();buildSellerFilter();buildKPIs();buildReputation();buildMainCharts();buildPieChart();buildLLCharts();buildAGG2Table();buildTop10Table()}
 initDateFilter();render();
 </script>
 </body>
