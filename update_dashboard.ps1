@@ -1,10 +1,10 @@
-# update_dashboard.ps1
+﻿# update_dashboard.ps1
 # Dashboard VP&A Uruguay 2026 - Actualizacion de datos via bq CLI
 # Ejecutar desde: C:\Users\mleites\dashboard-vpa
 # Comando: powershell -ExecutionPolicy Bypass -File update_dashboard.ps1
 
 $PROJECT    = "meli-bi-data"
-$CUTOFF     = "2026-06-30"
+$CUTOFF     = "2026-07-31"
 $HTML_PATH  = "$PSScriptRoot\index.html"
 $SELLERS    = "201693236,711398480,231288367,419727897,2105656368,203996532,258377683"
 $TOP10_FROM = "2025-01-01"
